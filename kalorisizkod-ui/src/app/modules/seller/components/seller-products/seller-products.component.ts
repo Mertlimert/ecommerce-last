@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule, ReactiveFormsModule, FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { SellerService } from '../../../../services/seller.service';
-
+import { AuthService } from '../../../../services/auth.service'; // Auth service doğru dosyadan import edildi
 
 
 
@@ -23,22 +23,28 @@ export class SellerProductsComponent implements OnInit {
   productForm!: FormGroup;
   editingProductId: number | null = null;
 
-  constructor(private fb: FormBuilder, private sellerService: SellerService) {
+  constructor(private fb: FormBuilder, private sellerService: SellerService,
+    private authService: AuthService) {
     this.createForm();
   }
 
   ngOnInit(): void {
-    this.loading = true;
-    this.sellerService.getSellerProducts().subscribe({
-      next: (data) => {
-        this.products = data;
-        this.loading = false;
+    // Satıcı profili kontrolü ve gerekirse oluşturma
+    this.sellerService.checkSellerProfile().subscribe({
+      next: (profile) => {
+        console.log('Satıcı profili:', profile);
+        // Profil hazır, ürünleri yükle
+        this.loadProducts();
       },
-      error: (error) => {
-        console.error('Ürün yükleme hatası:', error);
-        this.loading = false;
+      error: (err) => {
+        console.error('Satıcı profili kontrolünde hata:', err);
+        this.showNotification('Satıcı profili kontrolünde hata oluştu', 'error');
       }
     });
+  }
+
+  loadProducts(): void {
+    // Mevcut ürün yükleme kodu...
   }
 
   createForm(): void {
@@ -78,31 +84,21 @@ export class SellerProductsComponent implements OnInit {
     this.editingProductId = null;
   }
 
-  // addProduct metodunu değiştirin
-  addProduct(): void {
-    if (this.productForm.invalid) {
-      return;
+    addProduct(): void {
+    if (this.productForm.valid) {
+      const newProduct = this.productForm.value;
+
+      // Ürün ekleme işlemi - mevcut
+      this.sellerService.addProduct(newProduct).subscribe({
+        next: (response) => {
+          // Başarılı işlem kodu
+        },
+        error: (err) => {
+          console.error('Ürün ekleme hatası:', err);
+          console.log('Hata detayı:', err.error);
+        }
+      });
     }
-
-    // Sorun 1: Console log ekleyin ve formun değerlerini kontrol edin
-    console.log('Form değerleri:', this.productForm.value);
-
-    const newProduct = this.productForm.value;
-    this.loading = true;
-
-    this.sellerService.addProduct(newProduct).subscribe({
-      next: (response) => {
-        console.log('Başarılı yanıt:', response); // Sorun 2: Response'u kontrol edin
-        this.products.push(response);
-        this.closeModals();
-        this.loading = false;
-      },
-      error: (error) => {
-        console.error('Ürün ekleme hatası:', error); // Sorun 3: Hata detayını kontrol edin
-        this.loading = false;
-        alert('Ürün eklenirken bir hata oluştu: ' + error.message);
-      }
-    });
   }
 
   updateProduct(): void {
