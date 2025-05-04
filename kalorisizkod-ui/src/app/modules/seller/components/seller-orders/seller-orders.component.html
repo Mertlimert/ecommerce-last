@@ -1,0 +1,83 @@
+<div class="container mt-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Sipariş Yönetimi</h2>
+
+    <div class="filter-bar">
+      <div class="btn-group">
+        <button class="btn" [class.btn-primary]="filterStatus === 'all'" [class.btn-outline-primary]="filterStatus !== 'all'" (click)="filterStatus = 'all'">
+          Tümü
+        </button>
+        <button class="btn" [class.btn-primary]="filterStatus === 'PENDING'" [class.btn-outline-primary]="filterStatus !== 'PENDING'" (click)="filterStatus = 'PENDING'">
+          Beklemede
+        </button>
+        <button class="btn" [class.btn-primary]="filterStatus === 'SHIPPED'" [class.btn-outline-primary]="filterStatus !== 'SHIPPED'" (click)="filterStatus = 'SHIPPED'">
+          Kargoya Verildi
+        </button>
+        <button class="btn" [class.btn-primary]="filterStatus === 'DELIVERED'" [class.btn-outline-primary]="filterStatus !== 'DELIVERED'" (click)="filterStatus = 'DELIVERED'">
+          Teslim Edildi
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="loading" class="text-center my-5">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Yükleniyor...</span>
+    </div>
+    <p class="mt-2">Siparişler yükleniyor...</p>
+  </div>
+
+  <div *ngIf="!loading" class="table-responsive">
+    <table class="table table-striped table-hover">
+      <thead>
+        <tr>
+          <th>Sipariş No</th>
+          <th>Müşteri</th>
+          <th>Tutar</th>
+          <th>Tarih</th>
+          <th>Ürün Sayısı</th>
+          <th>Durum</th>
+          <th>İşlemler</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let order of filteredOrders">
+          <td>#{{ order.id }}</td>
+          <td>{{ order.customerName }}</td>
+          <td>{{ order.totalPrice | currency:'₺' }}</td>
+          <td>{{ order.orderDate }}</td>
+          <td>{{ order.items }}</td>
+          <td>
+            <span class="badge rounded-pill" [ngClass]="getStatusBadgeClass(order.status)">
+              {{ getStatusText(order.status) }}
+            </span>
+          </td>
+          <td>
+            <div class="dropdown">
+              <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                İşlemler
+              </button>
+              <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="javascript:void(0)">Sipariş Detayı</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li *ngIf="order.status === 'PENDING'">
+                  <a class="dropdown-item" href="javascript:void(0)" (click)="updateOrderStatus(order, 'SHIPPED')">Kargoya Ver</a>
+                </li>
+                <li *ngIf="order.status === 'SHIPPED'">
+                  <a class="dropdown-item" href="javascript:void(0)" (click)="updateOrderStatus(order, 'DELIVERED')">Teslim Edildi İşaretle</a>
+                </li>
+                <li *ngIf="order.status === 'PENDING'">
+                  <a class="dropdown-item text-danger" href="javascript:void(0)" (click)="updateOrderStatus(order, 'CANCELLED')">İptal Et</a>
+                </li>
+              </ul>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div *ngIf="!loading && filteredOrders.length === 0" class="alert alert-info">
+    Bu durumda hiç sipariş bulunamadı.
+  </div>
+</div>

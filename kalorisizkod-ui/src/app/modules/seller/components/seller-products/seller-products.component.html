@@ -1,0 +1,195 @@
+<div class="container mt-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Ürünlerim</h2>
+    <button class="btn btn-success" (click)="openAddProductModal()">
+      <i class="bi bi-plus-lg"></i> Yeni Ürün Ekle
+    </button>
+  </div>
+
+  <div *ngIf="loading" class="text-center my-5">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Yükleniyor...</span>
+    </div>
+    <p class="mt-2">Ürünleriniz yükleniyor...</p>
+  </div>
+
+  <div *ngIf="!loading" class="product-grid">
+    <div class="row">
+      <div *ngFor="let product of products" class="col-md-4 col-sm-6 mb-4">
+        <div class="card product-card h-100" [class.inactive]="!product.active">
+          <div class="status-badge" *ngIf="!product.active">Pasif</div>
+          <img [src]="product.imageUrl" class="card-img-top" alt="{{ product.name }}">
+          <div class="card-body">
+            <h5 class="card-title">{{ product.name }}</h5>
+            <p class="card-text description">{{ product.description }}</p>
+            <div class="d-flex justify-content-between align-items-center">
+              <span class="price">{{ product.price | currency:'₺' }}</span>
+              <span class="stock">Stok: {{ product.stock }}</span>
+            </div>
+            <div class="category-badge">{{ product.category }}</div>
+          </div>
+          <div class="card-footer">
+            <div class="btn-group w-100">
+              <button class="btn btn-sm btn-outline-primary" (click)="openEditProductModal(product)">
+                <i class="bi bi-pencil"></i> Düzenle
+              </button>
+              <button class="btn btn-sm" [ngClass]="product.active ? 'btn-outline-warning' : 'btn-outline-success'" (click)="toggleProductStatus(product)">
+                <i class="bi" [ngClass]="product.active ? 'bi-eye-slash' : 'bi-eye'"></i>
+                {{ product.active ? 'Pasifleştir' : 'Aktifleştir' }}
+              </button>
+              <button class="btn btn-sm btn-outline-danger" (click)="deleteProduct(product.id)">
+                <i class="bi bi-trash"></i> Sil
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="!loading && products.length === 0" class="text-center my-5">
+    <div class="alert alert-info">
+      <p>Henüz ürün eklemediniz.</p>
+      <button class="btn btn-primary" (click)="openAddProductModal()">İlk Ürününüzü Ekleyin</button>
+    </div>
+  </div>
+
+  <!-- Yeni Ürün Ekleme Modal -->
+  <div class="modal" [class.show]="showAddProductModal" [style.display]="showAddProductModal ? 'block' : 'none'" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Yeni Ürün Ekle</h5>
+          <button type="button" class="btn-close" (click)="closeModals()"></button>
+        </div>
+        <div class="modal-body">
+          <form [formGroup]="productForm">
+            <div class="mb-3">
+              <label for="name" class="form-label">Ürün Adı</label>
+              <input type="text" class="form-control" id="name" formControlName="name">
+              <div *ngIf="productForm.get('name')?.invalid && productForm.get('name')?.touched" class="text-danger">
+                Ürün adı en az 3 karakter olmalıdır.
+              </div>
+            </div>
+            <div class="mb-3">
+              <label for="description" class="form-label">Açıklama</label>
+              <textarea class="form-control" id="description" rows="3" formControlName="description"></textarea>
+              <div *ngIf="productForm.get('description')?.invalid && productForm.get('description')?.touched" class="text-danger">
+                Açıklama en az 10 karakter olmalıdır.
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label for="price" class="form-label">Fiyat (₺)</label>
+                <input type="number" class="form-control" id="price" formControlName="price">
+                <div *ngIf="productForm.get('price')?.invalid && productForm.get('price')?.touched" class="text-danger">
+                  Geçerli bir fiyat giriniz.
+                </div>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="stock" class="form-label">Stok Adedi</label>
+                <input type="number" class="form-control" id="stock" formControlName="stock">
+                <div *ngIf="productForm.get('stock')?.invalid && productForm.get('stock')?.touched" class="text-danger">
+                  Geçerli bir stok adedi giriniz.
+                </div>
+              </div>
+            </div>
+            <div class="mb-3">
+              <label for="category" class="form-label">Kategori</label>
+              <select class="form-select" id="category" formControlName="category">
+                <option value="">Kategori Seçiniz</option>
+                <option *ngFor="let category of categories" [value]="category">{{ category }}</option>
+              </select>
+              <div *ngIf="productForm.get('category')?.invalid && productForm.get('category')?.touched" class="text-danger">
+                Kategori seçimi zorunludur.
+              </div>
+            </div>
+            <div class="mb-3">
+              <label for="imageUrl" class="form-label">Görsel URL</label>
+              <input type="text" class="form-control" id="imageUrl" formControlName="imageUrl">
+            </div>
+            <div class="mb-3 form-check">
+              <input type="checkbox" class="form-check-input" id="active" formControlName="active">
+              <label class="form-check-label" for="active">Aktif</label>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="closeModals()">İptal</button>
+          <button type="button" class="btn btn-primary" [disabled]="productForm.invalid" (click)="addProduct()">Ürün Ekle</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Ürün Düzenleme Modal -->
+  <div class="modal" [class.show]="showEditProductModal" [style.display]="showEditProductModal ? 'block' : 'none'" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Ürün Düzenle</h5>
+          <button type="button" class="btn-close" (click)="closeModals()"></button>
+        </div>
+        <div class="modal-body">
+          <form [formGroup]="productForm">
+            <div class="mb-3">
+              <label for="edit-name" class="form-label">Ürün Adı</label>
+              <input type="text" class="form-control" id="edit-name" formControlName="name">
+              <div *ngIf="productForm.get('name')?.invalid && productForm.get('name')?.touched" class="text-danger">
+                Ürün adı en az 3 karakter olmalıdır.
+              </div>
+            </div>
+            <div class="mb-3">
+              <label for="edit-description" class="form-label">Açıklama</label>
+              <textarea class="form-control" id="edit-description" rows="3" formControlName="description"></textarea>
+              <div *ngIf="productForm.get('description')?.invalid && productForm.get('description')?.touched" class="text-danger">
+                Açıklama en az 10 karakter olmalıdır.
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label for="edit-price" class="form-label">Fiyat (₺)</label>
+                <input type="number" class="form-control" id="edit-price" formControlName="price">
+                <div *ngIf="productForm.get('price')?.invalid && productForm.get('price')?.touched" class="text-danger">
+                  Geçerli bir fiyat giriniz.
+                </div>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="edit-stock" class="form-label">Stok Adedi</label>
+                <input type="number" class="form-control" id="edit-stock" formControlName="stock">
+                <div *ngIf="productForm.get('stock')?.invalid && productForm.get('stock')?.touched" class="text-danger">
+                  Geçerli bir stok adedi giriniz.
+                </div>
+              </div>
+            </div>
+            <div class="mb-3">
+              <label for="edit-category" class="form-label">Kategori</label>
+              <select class="form-select" id="edit-category" formControlName="category">
+                <option value="">Kategori Seçiniz</option>
+                <option *ngFor="let category of categories" [value]="category">{{ category }}</option>
+              </select>
+              <div *ngIf="productForm.get('category')?.invalid && productForm.get('category')?.touched" class="text-danger">
+                Kategori seçimi zorunludur.
+              </div>
+            </div>
+            <div class="mb-3">
+              <label for="edit-imageUrl" class="form-label">Görsel URL</label>
+              <input type="text" class="form-control" id="edit-imageUrl" formControlName="imageUrl">
+            </div>
+            <div class="mb-3 form-check">
+              <input type="checkbox" class="form-check-input" id="edit-active" formControlName="active">
+              <label class="form-check-label" for="edit-active">Aktif</label>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="closeModals()">İptal</button>
+          <button type="button" class="btn btn-primary" [disabled]="productForm.invalid" (click)="updateProduct()">Değişiklikleri Kaydet</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Backdrop -->
+  <div class="modal-backdrop fade show" *ngIf="showAddProductModal || showEditProductModal"></div>
+</div>
